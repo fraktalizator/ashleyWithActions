@@ -45,7 +45,8 @@ public class Engine {
 	
 	private final Listener<Entity> componentAdded = new ComponentListener();
 	private final Listener<Entity> componentRemoved = new ComponentListener();
-	
+
+	private final ActionManager actionManager = new ActionManager(new EngineActionListener());
 	private SystemManager systemManager = new SystemManager(new EngineSystemListener());
 	private EntityManager entityManager = new EntityManager(new EngineEntityListener());
 	private ComponentOperationHandler componentOperationHandler = new ComponentOperationHandler(new EngineDelayedInformer());
@@ -131,6 +132,36 @@ public class Engine {
 	 */
 	public ImmutableArray<Entity> getEntities() {
 		return entityManager.getEntities();
+	}
+
+	/**
+	 * Adds the {@link EntityAction} to this Engine.
+	 * If the Engine already had an action of the same class,
+	 * the new one will replace the old one.
+	 */
+	public void addAction(EntityAction action){
+		actionManager.addAction(action);
+	}
+
+	/**
+	 * Removes the {@link EntityAction} from this Engine.
+	 */
+	public void removeAction(EntityAction action){
+		actionManager.removeAction(action);
+	}
+
+	/**
+	 * Removes all actions from this Engine.
+	 */
+	public void removeAllActions(){
+		actionManager.removeAllActions();
+	}
+
+	/**
+	 * Quick {@link EntityAction} retrieval.
+	 */
+	public <T extends EntityAction> T getAction(Class<T> actionType){
+		return actionManager.getAction(actionType);
 	}
 
 	/**
@@ -273,7 +304,7 @@ public class Engine {
 			familyManager.updateFamilyMembership(object);
 		}
 	}
-	
+
 	private class EngineSystemListener implements SystemListener {
 		@Override
 		public void systemAdded (EntitySystem system) {
@@ -283,6 +314,19 @@ public class Engine {
 		@Override
 		public void systemRemoved (EntitySystem system) {
 			system.removedFromEngineInternal(Engine.this);
+		}
+	}
+
+	private class EngineActionListener implements ActionManager.ActionListener {
+
+		@Override
+		public void actionAdded(EntityAction action) {
+			action.addedToEngineInternal( Engine.this);
+		}
+
+		@Override
+		public void actionRemoved(EntityAction action) {
+			action.removedFromEngineInternal( Engine.this);
 		}
 	}
 	
